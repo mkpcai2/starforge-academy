@@ -44,6 +44,7 @@ const refs = {
   consoleTitle: $('consoleTitle'),
   sliders: $('sliders'),
   levelExtra: $('levelExtra'),
+  missionExtra: $('missionExtra'),
   resetLevel: $('resetLevel'),
   codeDock: $('codeDock'),
   codeFile: $('codeFile'),
@@ -51,6 +52,10 @@ const refs = {
   copyCode: $('copyCode'),
   closeCode: $('closeCode'),
   codeToggle: $('codeToggle'),
+  codeBackdrop: $('codeBackdrop'),
+  installBtn: $('installBtn'),
+  installIntroBtn: $('installIntroBtn'),
+  orientationLock: $('orientationLock'),
   toast: $('toast'),
   completeEyebrow: $('completeEyebrow'),
   completeTitle: $('completeTitle'),
@@ -84,6 +89,9 @@ const game = {
   flash: 0,
   bootHidden: false,
   lastFocused: null,
+  deferredInstallPrompt: null,
+  installAvailable: false,
+  isStandalone: false,
 };
 
 try {
@@ -106,6 +114,13 @@ let camTween = null;
 const clock = new THREE.Clock();
 const clockTime = { elapsed: 0 };
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+const coarsePointer = window.matchMedia('(any-pointer: coarse)');
+const isTouchDevice = coarsePointer.matches || navigator.maxTouchPoints > 1;
+const isStandalone =
+  window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const isIOS =
+  /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
 function showWebGLError() {
   if (refs.boot) refs.boot.remove();
@@ -134,6 +149,90 @@ function saveSoundPreference() {
     localStorage.setItem('starforge.sound', audio.enabled ? 'on' : 'off');
   } catch (error) {
     // Ignore storage errors.
+  }
+}
+
+function isPortraitTouch() {
+  return isTouchDevice && window.innerHeight > window.innerWidth;
+}
+
+function isTouchLandscape() {
+  return isTouchDevice && window.innerWidth >= window.innerHeight;
+}
+
+function haptic(pattern = 8) {
+  if (!isTouchDevice || typeof navigator.vibrate !== 'function') return;
+  try {
+    navigator.vibrate(pattern);
+  } catch (error) {
+    // Vibration is optional.
+  }
+}
+
+function setInstallAvailable(available) {
+  game.installAvailable = available;
+  document.body.classList.toggle('can-install', available && !isStandalone);
+}
+
+function updateViewportMode() {
+  document.body.classList.toggle('is-touch', isTouchDevice);
+  document.body.classList.toggle('is-portrait', isPortraitTouch());
+  document.body.classList.toggle('is-landscape', isTouchLandscape());
+  syncExtraPlacement();
+  if (world) world.resize();
+  syncControlsEnabled();
+}
+
+function setupPWA() {
+  document.body.classList.toggle('is-standalone', isStandalone);
+  if (isStandalone) {
+    setInstallAvailable(false);
+    return;
+  }
+
+  if (isIOS || isTouchDevice) setInstallAvailable(true);
+
+  window.addEventListener('beforeinstallprompt', (event) => {
+    event.preventDefault();
+    game.deferredInstallPrompt = event;
+    setInstallAvailable(true);
+  });
+
+  window.addEventListener('appinstalled', () => {
+    game.deferredInstallPrompt = null;
+    setInstallAvailable(false);
+    toast('星際工坊已安裝到主畫面', 4200, true);
+  });
+
+  if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(() => {
+        // The game still works online when a service worker cannot register.
+      });
+    });
+  }
+}
+
+async function installApp() {
+  audio.click();
+  haptic(8);
+  if (game.deferredInstallPrompt) {
+    const prompt = game.deferredInstallPrompt;
+    game.deferredInstallPrompt = null;
+    try {
+      await prompt.prompt();
+      const choice = await prompt.userChoice;
+      if (choice.outcome === 'accepted') setInstallAvailable(false);
+    } catch (error) {
+      // The install prompt may already be consumed.
+    }
+    return;
+  }
+
+  if (isIOS) {
+    toast('Safari：點「分享」圖示 →「加入主畫面」即可安裝。', 6500, true);
+  } else {
+    toast('請開啟瀏覽器選單，選擇「安裝應用程式」或「加入主畫面」。', 6500, true);
   }
 }
 
@@ -243,6 +342,15 @@ function refreshExtraUI() {
   }
 }
 
+function syncExtraPlacement() {
+  if (!refs.missionExtra || !refs.levelExtra) return;
+  const level = LEVELS[game.index];
+  const moveToMission = isTouchLandscape() && level?.id === 'light';
+  const source = moveToMission ? refs.levelExtra : refs.missionExtra;
+  const target = moveToMission ? refs.missionExtra : refs.levelExtra;
+  if (source.childNodes.length) target.append(...source.childNodes);
+}
+
 function updateHUDForLevel(level, index) {
   refs.levelNumber.textContent = String(index + 1).padStart(2, '0');
   refs.levelTag.textContent = level.tag;
@@ -263,7 +371,9 @@ function updateHUDForLevel(level, index) {
   refs.missionCard.classList.remove('is-switching');
   void refs.missionCard.offsetWidth;
   refs.missionCard.classList.add('is-switching');
+  refs.missionExtra.innerHTML = '';
   refs.levelExtra.innerHTML = level.extra ? level.extra(game.values) : '';
+  syncExtraPlacement();
 }
 
 function applyValuesAndRefresh() {
@@ -312,7 +422,13 @@ function loadLevel(index, options = {}) {
 
   const position = new THREE.Vector3(...level.camera.position);
   const target = new THREE.Vector3(...level.camera.target);
-  if (window.innerWidth <= 820 && level.mobileCamera) {
+  if (isTouchLandscape()) {
+    if (window.innerWidth < 760) {
+      position.sub(target).multiplyScalar(1.18).add(target);
+    } else {
+      position.sub(target).multiplyScalar(0.9).add(target);
+    }
+  } else if (window.innerWidth <= 820 && level.mobileCamera) {
     position.set(...level.mobileCamera.position);
     target.set(...level.mobileCamera.target);
     position.sub(target).multiplyScalar(1.2).add(target);
@@ -421,6 +537,7 @@ function completeLevel() {
   setProgress(1, '展品已修復', true);
 
   audio.success();
+  haptic([18, 35, 24]);
   spawnBurst(runtime, level);
   syncControlsEnabled();
 
@@ -471,7 +588,7 @@ function showFinale() {
   refs.finaleBar.hidden = true;
   refs.finaleTime.textContent = formatTime((Date.now() - game.startedAt) / 1000);
 
-  const mobileFinale = window.innerWidth <= 820;
+  const mobileFinale = !isTouchDevice && window.innerWidth <= 820;
   flyCamera(
     mobileFinale ? new THREE.Vector3(1.2, 6.4, 17.5) : new THREE.Vector3(0, 5.25, 14.5),
     mobileFinale ? new THREE.Vector3(1.2, 2.2, 0) : new THREE.Vector3(0, 2.2, 0),
@@ -628,10 +745,11 @@ function clearEffects() {
   effects.length = 0;
 }
 
-function toast(message, duration = 2800) {
+function toast(message, duration = 2800, elevated = false) {
   if (!refs.toast) return;
   window.clearTimeout(game.toastTimer);
   refs.toast.textContent = message;
+  refs.toast.classList.toggle('is-elevated', elevated);
   refs.toast.classList.add('is-visible');
   game.toastTimer = window.setTimeout(() => {
     refs.toast.classList.remove('is-visible');
@@ -640,7 +758,10 @@ function toast(message, duration = 2800) {
 
 function hideToast() {
   window.clearTimeout(game.toastTimer);
-  if (refs.toast) refs.toast.classList.remove('is-visible');
+  if (refs.toast) {
+    refs.toast.classList.remove('is-visible');
+    refs.toast.classList.remove('is-elevated');
+  }
 }
 
 function syncControlsEnabled() {
@@ -654,6 +775,7 @@ function syncControlsEnabled() {
   const canControl =
     !camTween &&
     !overlayOpen &&
+    !isPortraitTouch() &&
     (game.phase === 'playing' || game.phase === 'finale');
   world.controls.enabled = canControl;
   world.controls.autoRotate =
@@ -751,9 +873,10 @@ function resetLevel() {
 }
 
 function startGame() {
-  if (game.phase !== 'intro' || !world) return;
+  if (game.phase !== 'intro' || !world || isPortraitTouch()) return;
   audio.init();
   if (audio.enabled) audio.start();
+  haptic(12);
   refs.introOverlay.classList.add('is-leaving');
   refs.introOverlay.hidden = false;
   document.body.classList.add('is-playing');
@@ -793,6 +916,7 @@ function handleNudge(event) {
   game.values[key] = clamp(Number(snapped.toFixed(4)), control.min, control.max);
   applyValuesAndRefresh();
   audio.tick(540 + (game.values[key] - control.min) * 4, 0.008);
+  haptic(6);
 }
 
 function bindEvents() {
@@ -815,14 +939,21 @@ function bindEvents() {
     else openCodePanel();
   });
   refs.closeCode.addEventListener('click', closeCodePanel);
+  refs.codeBackdrop.addEventListener('click', () => closeCodePanel());
+  refs.installBtn.addEventListener('click', installApp);
+  refs.installIntroBtn.addEventListener('click', installApp);
   refs.nextLevelBtn.addEventListener('click', goToNextLevel);
   refs.exploreBtn.addEventListener('click', exploreFinale);
   refs.restartBtn.addEventListener('click', restartGame);
   refs.finaleRestart.addEventListener('click', restartGame);
 
-  window.addEventListener('resize', () => {
-    if (world) world.resize();
+  window.addEventListener('resize', updateViewportMode);
+  window.addEventListener('orientationchange', () => {
+    window.setTimeout(updateViewportMode, 220);
   });
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', updateViewportMode);
+  }
 
   window.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape') return;
@@ -923,6 +1054,8 @@ function init() {
   renderProgress(-1);
   setSoundUI();
   bindEvents();
+  setupPWA();
+  updateViewportMode();
 
   if (!world) return;
   levelRoot = new THREE.Group();

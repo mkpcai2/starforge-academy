@@ -628,8 +628,15 @@ export function createWorld() {
   scene.environment = createEnvironmentTexture(renderer);
   if ('environmentIntensity' in scene) scene.environmentIntensity = 0.62;
 
+  const getCameraFov = () => {
+    const touchLandscape =
+      window.matchMedia('(any-pointer: coarse)').matches &&
+      window.innerWidth >= window.innerHeight;
+    return touchLandscape || window.innerWidth <= 820 ? 50 : 42;
+  };
+
   const camera = new THREE.PerspectiveCamera(
-    window.innerWidth <= 820 ? 50 : 42,
+    getCameraFov(),
     window.innerWidth / window.innerHeight,
     0.1,
     130,
@@ -724,7 +731,7 @@ export function createWorld() {
   function resize() {
     const width = window.innerWidth;
     const height = window.innerHeight;
-    camera.fov = width <= 820 ? 50 : 42;
+    camera.fov = getCameraFov();
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
     renderer.setSize(width, height);

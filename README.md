@@ -1,34 +1,40 @@
 # 星際工坊 · Three.js 互動學院
 
-一個可以直接在瀏覽器玩的 Three.js 教育遊戲。玩家修復漂浮天文台的五件展品，依序學會 **座標、旋轉、縮放、燈光與動畫**。
+一個以 **手機／iPad 橫向遊玩** 為優先的 Three.js 教育遊戲。玩家修復漂浮天文台的五件展品，依序學會 **座標、旋轉、縮放、燈光與動畫**。
 
 ▶ **[線上遊玩](https://mkpcai2.github.io/starforge-academy/)** · [GitHub 原始碼](https://github.com/mkpcai2/starforge-academy)
 
-![星際工坊遊戲畫面](preview.png)
+![手機橫向遊戲畫面](preview-mobile.png)
 
 ## 線上版
 
-遊戲已部署到 GitHub Pages：
+遊戲已部署到 GitHub Pages，支援 PWA 安裝、全螢幕與離線快取：
 
 **<https://mkpcai2.github.io/starforge-academy/>**
 
 每次推送到 `main` 分支，GitHub Pages 會自動重新建置。
 
-## 本機啟動
+## 手機／iPad 安裝
 
-```powershell
-git clone https://github.com/mkpcai2/starforge-academy.git
-cd starforge-academy
-node serve.mjs
-```
+1. 用手機或 iPad 的 Safari／Chrome 開啟上面的網址。
+2. 把裝置轉成 **橫向**；遊戲只支援橫向，直向時會顯示旋轉提示。
+3. 點右上角的 **「安裝」**，或使用瀏覽器分享選單的「加入主畫面」。
+4. 之後從主畫面啟動，就會以獨立 App 視窗、全螢幕方式遊玩，離線也能載入。
 
-然後開啟 <http://127.0.0.1:8137>。也可以雙擊 `start.bat`（Windows），或改用任何靜態伺服器：
+- iPhone／iPad Safari：分享 → **加入主畫面**
+- Android Chrome：選單 → **安裝應用程式**
+- 已安裝 PWA 後，遊戲會自動隱藏安裝按鈕
 
-```powershell
-python -m http.server 8137
-```
+> 這是「PWA 優先」版本，日後可以用 Capacitor 包成 iOS/iPadOS App；目前尚未包含 Xcode 專案與 App Store 上架設定。
 
-> 由於使用 ES Module 載入 Three.js，請透過本機伺服器開啟，不要直接雙擊 `index.html`。
+## 橫向遊玩
+
+- 手機：左側任務卡、右側觸控控制台，3D 場景在中間。
+- iPad：同樣的雙側駕駛艙配置，使用更大的場景與觸控目標。
+- 直向：顯示「請轉為橫向」遮罩，避免把橫向遊戲硬塞進窄版。
+- 桌面版仍保留原本的完整介面。
+
+![iPad 橫向遊戲畫面](preview-ipad.png)
 
 ## 五個關卡
 
@@ -44,20 +50,38 @@ python -m http.server 8137
 
 ## 操作
 
-- 拖曳畫面：環視 3D 場景
-- 滾輪／雙指：遠近縮放
-- 右側滑桿：調整數值
-- `+` / `−` 按鈕：微調一個步進
+- 拖曳 3D 場景：環視
+- 雙指／滾輪：遠近縮放
+- 大型滑桿與 `+` / `−`：調整數值
+- 程式碼按鈕：全螢幕程式碼面板
 - 完成關卡後：閱讀概念說明，前往下一關
-- 手機版：控制台位於底部，程式碼按鈕在控制台右下角
+- 支援震動回饋（Android 等支援 Vibration API 的裝置）
+
+## 本機啟動
+
+```powershell
+git clone https://github.com/mkpcai2/starforge-academy.git
+cd starforge-academy
+node serve.mjs
+```
+
+然後開啟 <http://127.0.0.1:8137>。也可以雙擊 `start.bat`（Windows），或改用任何靜態伺服器：
+
+```powershell
+python -m http.server 8137
+```
+
+> 由於使用 ES Module 載入 Three.js，請透過本機伺服器開啟，不要直接雙擊 `index.html`。Service Worker 只在 HTTPS 下註冊，因此本機 http 版本不會有離線快取。
 
 ## 技術
 
 - Three.js r170（本地 `vendor/`，無需連網）
 - 原生 ES Modules，無打包工具
+- PWA：manifest、192／512 圖示、Service Worker、離線 shell
+- 觸控優先 HUD：44px 觸控目標、安全區、橫向鎖定提示
 - WebGL 即時陰影、PMREM 環境反射、程序化星空與平台材質
 - Web Audio API 即時合成音效
-- 繁體中文、桌面與手機響應式介面
+- 繁體中文、手機／iPad／桌面自適應
 
 ## 專案結構
 
@@ -65,12 +89,20 @@ python -m http.server 8137
 starforge-academy/
 ├─ index.html
 ├─ style.css
+├─ manifest.webmanifest
+├─ sw.js
 ├─ serve.mjs
 ├─ start.bat
 ├─ preview.png
 ├─ preview-intro.png
+├─ preview-mobile.png
+├─ preview-ipad.png
+├─ icons/
+│  ├─ icon-192.png
+│  ├─ icon-512.png
+│  └─ apple-touch-icon.png
 ├─ src/
-│  ├─ main.js      遊戲流程、UI、相機、特效
+│  ├─ main.js      遊戲流程、UI、相機、特效、PWA 安裝
 │  ├─ levels.js    五個關卡的 3D 內容與判定
 │  ├─ world.js     場景、燈光、平台、星空、片頭與結局
 │  └─ utils.js     共用材質、動畫工具、音效
@@ -87,6 +119,6 @@ starforge-academy/
 
 ## 備註
 
-- 建議使用 Chrome、Edge 或 Safari 的近期版本，並開啟硬體加速。
+- 建議使用 iOS 16.4+／iPadOS 16.4+ 的 Safari，或近期版本的 Chrome／Edge。
 - 遊戲不需要任何外部圖片或音效檔；所有視覺與聲音都在執行時生成。
 - 若 `start.bat` 的伺服器視窗顯示連接埠被占用，代表服務已在執行，直接開 <http://127.0.0.1:8137> 即可。
