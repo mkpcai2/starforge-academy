@@ -28,6 +28,12 @@ const server = createServer(async (request, response) => {
     let pathname = decodeURIComponent(requestUrl.pathname);
     if (pathname === '/') pathname = '/index.html';
 
+    if (pathname.split('/').some((segment) => segment.startsWith('.'))) {
+      response.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+      response.end('Not found');
+      return;
+    }
+
     const filePath = normalize(join(root, pathname));
     if (!filePath.startsWith(root + sep) && filePath !== root) {
       response.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8' });
