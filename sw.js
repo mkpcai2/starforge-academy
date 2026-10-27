@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'starforge-v1';
+const CACHE_VERSION = 'starforge-v2';
 const BASE = new URL('./', self.location.href);
 const APP_SHELL = [
   '',

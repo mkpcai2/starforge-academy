@@ -2660,6 +2660,16 @@ body.is-standalone .install-intro {
   display: none !important;
 }
 
+body.is-standalone .fullscreen-btn {
+  display: none !important;
+}
+
+.fullscreen-btn.is-active {
+  border-color: rgba(95, 243, 255, 0.38);
+  color: var(--cyan);
+  background: rgba(95, 243, 255, 0.07);
+}
+
 .code-backdrop {
   display: none;
 }
@@ -2819,6 +2829,10 @@ body.is-standalone .install-intro {
     touch-action: manipulation;
   }
 
+  .icon-btn span {
+    display: none;
+  }
+
   .icon-btn svg {
     width: 18px;
     height: 18px;
@@ -2895,7 +2909,7 @@ body.is-standalone .install-intro {
     font-size: 10px;
     line-height: 1.5;
     -webkit-box-orient: vertical;
-    -webkit-line-clamp: 3;
+    -webkit-line-clamp: 4;
   }
 
   .meter-block {
@@ -3497,6 +3511,196 @@ body.is-standalone .install-intro {
   .intro-visual,
   .finale-visual {
     min-height: 220px;
+  }
+}
+
+@media (any-pointer: coarse) and (orientation: landscape) and (max-height: 380px) {
+  .topbar {
+    padding-top: max(6px, env(safe-area-inset-top));
+    padding-bottom: 6px;
+  }
+
+  .brand-mark {
+    width: 34px;
+    height: 34px;
+  }
+
+  .brand-copy strong {
+    font-size: 15px;
+  }
+
+  .brand-kicker {
+    font-size: 6.5px;
+  }
+
+  .top-actions {
+    gap: 5px;
+  }
+
+  .icon-btn {
+    min-width: 40px;
+    height: 40px;
+    padding: 0 8px;
+  }
+
+  .icon-btn svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  .mission {
+    top: calc(env(safe-area-inset-top) + 54px);
+    max-height: calc(100dvh - 62px);
+    padding: 10px 11px 9px;
+  }
+
+  .mission-top {
+    gap: 4px;
+    margin-bottom: 5px;
+  }
+
+  .mission .eyebrow {
+    font-size: 7.5px;
+  }
+
+  .target-badge {
+    padding: 2px 6px;
+    font-size: 7.5px;
+  }
+
+  .mission h1 {
+    margin-bottom: 3px;
+    font-size: 18px;
+  }
+
+  .mission-objective {
+    font-size: 10.5px;
+    line-height: 1.4;
+    -webkit-line-clamp: 2;
+  }
+
+  .hint-box {
+    display: none;
+  }
+
+  .meter-block {
+    padding-top: 6px;
+  }
+
+  .meter-label {
+    margin-bottom: 4px;
+  }
+
+  .meter-label span {
+    font-size: 8px;
+  }
+
+  .meter-label strong {
+    font-size: 15px;
+  }
+
+  .meter {
+    height: 5px;
+  }
+
+  .meter-foot {
+    display: none;
+  }
+
+  .console {
+    bottom: calc(env(safe-area-inset-bottom) + 8px);
+    max-height: calc(100dvh - 62px);
+    padding: 8px 9px 7px;
+  }
+
+  .console-head {
+    display: none;
+  }
+
+  .sliders {
+    gap: 3px;
+  }
+
+  .slider-head {
+    margin-bottom: 0;
+  }
+
+  .axis-label {
+    font-size: 10.5px;
+  }
+
+  .slider-value {
+    font-size: 13px;
+  }
+
+  .slider-value b {
+    font-size: 14px;
+  }
+
+  .slider-control {
+    grid-template-columns: 40px 1fr 40px;
+    gap: 5px;
+  }
+
+  .nudge {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    font-size: 16px;
+  }
+
+  input[type="range"] {
+    height: 30px;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    width: 24px;
+    height: 24px;
+    margin-top: -10px;
+  }
+
+  input[type="range"]::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+  }
+
+  .console-foot {
+    margin-top: 4px;
+    padding-top: 5px;
+    padding-bottom: 0;
+  }
+
+  .console-foot .text-btn {
+    min-height: 36px;
+    font-size: 9.5px;
+  }
+
+  .console-foot .text-btn svg {
+    width: 13px;
+    height: 13px;
+  }
+
+  .code-toggle {
+    min-height: 36px;
+    padding: 6px 8px;
+    font-size: 9px;
+  }
+
+  .toast {
+    bottom: calc(env(safe-area-inset-bottom) + 10px);
+  }
+
+  .mission-extra .extra-box {
+    padding: 6px;
+  }
+
+  .mission-extra .swatch {
+    height: 26px;
+  }
+
+  .mission-extra .swatch-label {
+    margin-bottom: 2px;
+    font-size: 7.5px;
   }
 }
 

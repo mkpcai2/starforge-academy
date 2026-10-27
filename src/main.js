@@ -53,6 +53,7 @@ const refs = {
   closeCode: $('closeCode'),
   codeToggle: $('codeToggle'),
   codeBackdrop: $('codeBackdrop'),
+  fullscreenBtn: $('fullscreenBtn'),
   installBtn: $('installBtn'),
   installIntroBtn: $('installIntroBtn'),
   orientationLock: $('orientationLock'),
@@ -117,7 +118,10 @@ const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 const coarsePointer = window.matchMedia('(any-pointer: coarse)');
 const isTouchDevice = coarsePointer.matches || navigator.maxTouchPoints > 1;
 const isStandalone =
-  window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  window.matchMedia('(display-mode: standalone)').matches ||
+  window.matchMedia('(display-mode: fullscreen)').matches ||
+  window.matchMedia('(display-mode: minimal-ui)').matches ||
+  navigator.standalone === true;
 const isIOS =
   /iphone|ipad|ipod/i.test(navigator.userAgent) ||
   (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -172,6 +176,59 @@ function haptic(pattern = 8) {
 function setInstallAvailable(available) {
   game.installAvailable = available;
   document.body.classList.toggle('can-install', available && !isStandalone);
+}
+
+function fullscreenElement() {
+  return document.fullscreenElement || document.webkitFullscreenElement || null;
+}
+
+function syncFullscreenButton() {
+  if (!refs.fullscreenBtn) return;
+  const active = Boolean(fullscreenElement());
+  refs.fullscreenBtn.classList.toggle('is-active', active);
+  refs.fullscreenBtn.setAttribute('aria-label', active ? '離開全螢幕' : '進入全螢幕');
+  const label = refs.fullscreenBtn.querySelector('span');
+  if (label) label.textContent = active ? '退出' : '全螢幕';
+}
+
+function showFullscreenHelp() {
+  if (isIOS) {
+    toast('Safari 分頁無法強制全螢幕。請「分享 → 加入主畫面」，從主畫面啟動即可全螢幕。', 7000, true);
+  } else {
+    toast('此瀏覽器不支援網頁全螢幕；可將遊戲安裝到主畫面。', 6000, true);
+  }
+}
+
+async function toggleFullscreen() {
+  audio.click();
+  haptic(8);
+  if (fullscreenElement()) {
+    try {
+      const exit = document.exitFullscreen || document.webkitExitFullscreen;
+      if (exit) await exit.call(document);
+    } catch (error) {
+      // Ignore exit failures.
+    }
+    syncFullscreenButton();
+    return;
+  }
+
+  const element = document.documentElement;
+  const request = element.requestFullscreen || element.webkitRequestFullscreen;
+  if (!request) {
+    showFullscreenHelp();
+    return;
+  }
+
+  try {
+    await request.call(element);
+    if (screen.orientation && typeof screen.orientation.lock === 'function') {
+      screen.orientation.lock('landscape').catch(() => {});
+    }
+    syncFullscreenButton();
+  } catch (error) {
+    showFullscreenHelp();
+  }
 }
 
 function updateViewportMode() {
@@ -940,12 +997,22 @@ function bindEvents() {
   });
   refs.closeCode.addEventListener('click', closeCodePanel);
   refs.codeBackdrop.addEventListener('click', () => closeCodePanel());
+  refs.fullscreenBtn.addEventListener('click', toggleFullscreen);
   refs.installBtn.addEventListener('click', installApp);
   refs.installIntroBtn.addEventListener('click', installApp);
   refs.nextLevelBtn.addEventListener('click', goToNextLevel);
   refs.exploreBtn.addEventListener('click', exploreFinale);
   refs.restartBtn.addEventListener('click', restartGame);
   refs.finaleRestart.addEventListener('click', restartGame);
+
+  document.addEventListener('fullscreenchange', () => {
+    syncFullscreenButton();
+    updateViewportMode();
+  });
+  document.addEventListener('webkitfullscreenchange', () => {
+    syncFullscreenButton();
+    updateViewportMode();
+  });
 
   window.addEventListener('resize', updateViewportMode);
   window.addEventListener('orientationchange', () => {
@@ -1056,6 +1123,7 @@ function init() {
   bindEvents();
   setupPWA();
   updateViewportMode();
+  syncFullscreenButton();
 
   if (!world) return;
   levelRoot = new THREE.Group();
