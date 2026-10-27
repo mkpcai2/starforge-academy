@@ -2,9 +2,19 @@
 
 一個可以直接在瀏覽器玩的 Three.js 教育遊戲。玩家修復漂浮天文台的五件展品，依序學會 **座標、旋轉、縮放、燈光與動畫**。
 
+▶ **[線上遊玩](https://mkpcai2.github.io/starforge-academy/)** · [GitHub 原始碼](https://github.com/mkpcai2/starforge-academy)
+
 ![星際工坊遊戲畫面](preview.png)
 
-## 啟動
+## 線上版
+
+遊戲已部署到 GitHub Pages：
+
+**<https://mkpcai2.github.io/starforge-academy/>**
+
+每次推送到 `main` 分支，GitHub Pages 會自動重新建置。
+
+## 本機啟動
 
 ```powershell
 cd threejs-academy
