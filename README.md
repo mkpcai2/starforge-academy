@@ -21,6 +21,15 @@
 3. 點右上角的 **「安裝」**，或使用瀏覽器分享選單的「加入主畫面」。
 4. 之後從主畫面啟動，就會以獨立 App 視窗、全螢幕方式遊玩，離線也能載入。
 
+### 啟動時的平台差異
+
+- **Android（Chrome／Edge／Samsung Internet）**：點「啟動修復」會直接請求全螢幕，並嘗試鎖定橫向；若瀏覽器或 App 內建瀏覽器阻擋，仍會以瀏覽器模式開始，可用右上角全螢幕按鈕再試。
+- **iPhone／iPad**：Safari 不允許網頁任意進入全螢幕，因此點「啟動修復」會先顯示兩種選擇：
+  1. **加入主畫面**：全螢幕、沉浸式（推薦）。會顯示 Safari 分享 → 加入主畫面的 3 個步驟。
+  2. **繼續用瀏覽器遊玩**：立即開始，但會保留 Safari 工具列。
+
+![iOS 遊玩方式選擇](preview-ios-choice.png)
+
 - iPhone／iPad Safari：分享 → **加入主畫面**
 - Android Chrome：選單 → **安裝應用程式**
 - 已安裝 PWA 後，遊戲會自動隱藏安裝按鈕
@@ -87,6 +96,7 @@ python -m http.server 8137
 - PWA：manifest、192／512 圖示、Service Worker、離線 shell
 - 觸控優先 HUD：44px 觸控目標、安全區、橫向鎖定提示
 - 短視窗自適應與 Fullscreen API
+- Android 啟動自動全螢幕；iOS 加入主畫面引導
 - WebGL 即時陰影、PMREM 環境反射、程序化星空與平台材質
 - Web Audio API 即時合成音效
 - 繁體中文、手機／iPad／桌面自適應
@@ -105,6 +115,7 @@ starforge-academy/
 ├─ preview-intro.png
 ├─ preview-mobile.png
 ├─ preview-ipad.png
+├─ preview-ios-choice.png
 ├─ icons/
 │  ├─ icon-192.png
 │  ├─ icon-512.png

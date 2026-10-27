@@ -21,6 +21,15 @@ const refs = {
   finaleOverlay: $('finaleOverlay'),
   finaleBar: $('finaleBar'),
   notebookModal: $('notebookModal'),
+  iosChoice: $('iosChoice'),
+  choiceOptions: $('choiceOptions'),
+  choiceSteps: $('choiceSteps'),
+  choiceInstall: $('choiceInstall'),
+  choiceBrowser: $('choiceBrowser'),
+  choiceClose: $('choiceClose'),
+  choiceStepsBack: $('choiceStepsBack'),
+  choiceBrowserFromSteps: $('choiceBrowserFromSteps'),
+  choiceBrowserNote: $('choiceBrowserNote'),
   startBtn: $('startBtn'),
   introNotebookBtn: $('introNotebookBtn'),
   notebookBtn: $('notebookBtn'),
@@ -125,6 +134,9 @@ const isStandalone =
 const isIOS =
   /iphone|ipad|ipod/i.test(navigator.userAgent) ||
   (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const isAndroid = /Android/i.test(navigator.userAgent);
+const isIOSSafari =
+  isIOS && !/CriOS|FxiOS|EdgiOS|OPiOS|DuckDuckGo/i.test(navigator.userAgent);
 
 function showWebGLError() {
   if (refs.boot) refs.boot.remove();
@@ -199,6 +211,23 @@ function showFullscreenHelp() {
   }
 }
 
+async function requestFullscreenForGame() {
+  const element = document.documentElement;
+  const request = element.requestFullscreen || element.webkitRequestFullscreen;
+  if (!request) return false;
+
+  try {
+    await request.call(element);
+    if (screen.orientation && typeof screen.orientation.lock === 'function') {
+      screen.orientation.lock('landscape').catch(() => {});
+    }
+    syncFullscreenButton();
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
 async function toggleFullscreen() {
   audio.click();
   haptic(8);
@@ -213,22 +242,8 @@ async function toggleFullscreen() {
     return;
   }
 
-  const element = document.documentElement;
-  const request = element.requestFullscreen || element.webkitRequestFullscreen;
-  if (!request) {
-    showFullscreenHelp();
-    return;
-  }
-
-  try {
-    await request.call(element);
-    if (screen.orientation && typeof screen.orientation.lock === 'function') {
-      screen.orientation.lock('landscape').catch(() => {});
-    }
-    syncFullscreenButton();
-  } catch (error) {
-    showFullscreenHelp();
-  }
+  const entered = await requestFullscreenForGame();
+  if (!entered) showFullscreenHelp();
 }
 
 function updateViewportMode() {
@@ -291,6 +306,55 @@ async function installApp() {
   } else {
     toast('請開啟瀏覽器選單，選擇「安裝應用程式」或「加入主畫面」。', 6500, true);
   }
+}
+
+function openIosChoice() {
+  if (!refs.iosChoice) return;
+  refs.iosChoice.hidden = false;
+  refs.choiceOptions.hidden = false;
+  refs.choiceSteps.hidden = true;
+  document.body.classList.add('choice-open');
+  syncControlsEnabled();
+  refs.choiceInstall.focus({ preventScroll: true });
+  audio.click();
+}
+
+function closeIosChoice(restoreFocus = true) {
+  if (!refs.iosChoice || refs.iosChoice.hidden) return;
+  refs.iosChoice.hidden = true;
+  document.body.classList.remove('choice-open');
+  syncControlsEnabled();
+  if (restoreFocus) refs.startBtn.focus({ preventScroll: true });
+  audio.click();
+}
+
+function showIosInstallSteps() {
+  refs.choiceOptions.hidden = true;
+  refs.choiceSteps.hidden = false;
+  if (refs.choiceBrowserNote) {
+    refs.choiceBrowserNote.textContent = isIOSSafari
+      ? '加入後請關閉這個分頁，從主畫面啟動，就會以全螢幕開啟。'
+      : '你目前使用的不是 Safari；請先用 Safari 開啟這個網址，再依上面步驟加入主畫面。';
+  }
+  refs.choiceStepsBack.focus({ preventScroll: true });
+  audio.click();
+}
+
+function chooseIosBrowser() {
+  closeIosChoice(false);
+  startGame();
+}
+
+function handleStartRequest() {
+  if (game.phase !== 'intro' || !world || isPortraitTouch()) return;
+  if (isIOS && !isStandalone) {
+    openIosChoice();
+    return;
+  }
+  if (isAndroid && !isStandalone) {
+    requestFullscreenForGame();
+  }
+  startGame();
 }
 
 function renderProgress(activeIndex = -1) {
@@ -828,6 +892,7 @@ function syncControlsEnabled() {
     !refs.completeOverlay.hidden ||
     !refs.finaleOverlay.hidden ||
     !refs.notebookModal.hidden ||
+    !refs.iosChoice.hidden ||
     document.body.classList.contains('code-open');
   const canControl =
     !camTween &&
@@ -977,7 +1042,7 @@ function handleNudge(event) {
 }
 
 function bindEvents() {
-  refs.startBtn.addEventListener('click', startGame);
+  refs.startBtn.addEventListener('click', handleStartRequest);
   refs.introNotebookBtn.addEventListener('click', openNotebook);
   refs.notebookBtn.addEventListener('click', openNotebook);
   refs.finaleNotebookBtn.addEventListener('click', openNotebook);
@@ -985,6 +1050,19 @@ function bindEvents() {
   refs.closeNotebook.addEventListener('click', closeNotebook);
   refs.notebookModal.addEventListener('click', (event) => {
     if (event.target === refs.notebookModal) closeNotebook();
+  });
+  refs.choiceInstall.addEventListener('click', showIosInstallSteps);
+  refs.choiceBrowser.addEventListener('click', chooseIosBrowser);
+  refs.choiceBrowserFromSteps.addEventListener('click', chooseIosBrowser);
+  refs.choiceStepsBack.addEventListener('click', () => {
+    refs.choiceSteps.hidden = true;
+    refs.choiceOptions.hidden = false;
+    refs.choiceInstall.focus({ preventScroll: true });
+    audio.click();
+  });
+  refs.choiceClose.addEventListener('click', () => closeIosChoice());
+  refs.iosChoice.addEventListener('click', (event) => {
+    if (event.target === refs.iosChoice) closeIosChoice();
   });
   refs.soundBtn.addEventListener('click', toggleSound);
   refs.sliders.addEventListener('input', handleSliderInput);
@@ -1024,6 +1102,10 @@ function bindEvents() {
 
   window.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape') return;
+    if (!refs.iosChoice.hidden) {
+      closeIosChoice();
+      return;
+    }
     if (!refs.notebookModal.hidden) {
       closeNotebook();
       return;

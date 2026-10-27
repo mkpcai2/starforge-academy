@@ -165,6 +165,51 @@
       </footer>
     </div>
 
+    <div class="ios-choice" id="iosChoice" hidden>
+      <div class="ios-choice-card panel" role="dialog" aria-modal="true" aria-labelledby="iosChoiceTitle">
+        <button class="close-btn ios-choice-close" id="choiceClose" type="button" aria-label="關閉選擇視窗">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
+        </button>
+        <span class="eyebrow">iPHONE / iPAD</span>
+        <h2 id="iosChoiceTitle">選擇遊玩方式</h2>
+        <p class="ios-choice-lede">加入主畫面可獲得全螢幕沉浸體驗；繼續用瀏覽器則會保留 Safari 工具列。</p>
+
+        <div class="ios-choice-options" id="choiceOptions">
+          <button class="ios-choice-option primary" id="choiceInstall" type="button">
+            <span class="choice-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M12 8v7M8.5 11.5 12 15l3.5-3.5M8 18h8"/></svg>
+            </span>
+            <span class="choice-copy"><b>加入主畫面</b><em>全螢幕、沉浸式（推薦）</em></span>
+            <span class="choice-arrow" aria-hidden="true">→</span>
+          </button>
+          <button class="ios-choice-option" id="choiceBrowser" type="button">
+            <span class="choice-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18M7 6.5h.01M10 6.5h.01"/></svg>
+            </span>
+            <span class="choice-copy"><b>繼續用瀏覽器遊玩</b><em>立即開始，但會保留 Safari 工具列</em></span>
+            <span class="choice-arrow" aria-hidden="true">→</span>
+          </button>
+        </div>
+
+        <div class="ios-choice-steps" id="choiceSteps" hidden>
+          <h3>加入主畫面 · 3 個步驟</h3>
+          <ol>
+            <li><span>1</span><p>在 Safari 點「分享」圖示（方框向上箭頭）。</p></li>
+            <li><span>2</span><p>在選單中選擇「加入主畫面」。</p></li>
+            <li><span>3</span><p>點「加入」，關閉此分頁，從主畫面啟動星際工坊。</p></li>
+          </ol>
+          <p class="ios-choice-note" id="choiceBrowserNote">從主畫面啟動後就是全螢幕，不會顯示網址列或分頁列。</p>
+          <div class="ios-choice-actions">
+            <button class="ghost-btn" id="choiceStepsBack" type="button">返回</button>
+            <button class="primary-btn" id="choiceBrowserFromSteps" type="button">
+              <span>先繼續瀏覽器遊玩</span>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="overlay complete-overlay" id="completeOverlay" hidden>
       <div class="complete-card panel" role="dialog" aria-modal="true" aria-labelledby="completeTitle">
         <div class="complete-top">
