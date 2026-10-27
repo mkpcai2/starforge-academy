@@ -2687,6 +2687,10 @@ input[type="range"]:active::-webkit-slider-thumb {
   letter-spacing: 0.04em;
 }
 
+.ios-choice-card.is-steps .ios-choice-lede {
+  display: none;
+}
+
 .ios-choice-lede {
   margin: 0 0 18px;
   color: var(--muted);

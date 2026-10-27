@@ -313,6 +313,7 @@ function openIosChoice() {
   refs.iosChoice.hidden = false;
   refs.choiceOptions.hidden = false;
   refs.choiceSteps.hidden = true;
+  refs.iosChoice.querySelector('.ios-choice-card')?.classList.remove('is-steps');
   document.body.classList.add('choice-open');
   syncControlsEnabled();
   refs.choiceInstall.focus({ preventScroll: true });
@@ -322,6 +323,7 @@ function openIosChoice() {
 function closeIosChoice(restoreFocus = true) {
   if (!refs.iosChoice || refs.iosChoice.hidden) return;
   refs.iosChoice.hidden = true;
+  refs.iosChoice.querySelector('.ios-choice-card')?.classList.remove('is-steps');
   document.body.classList.remove('choice-open');
   syncControlsEnabled();
   if (restoreFocus) refs.startBtn.focus({ preventScroll: true });
@@ -331,6 +333,7 @@ function closeIosChoice(restoreFocus = true) {
 function showIosInstallSteps() {
   refs.choiceOptions.hidden = true;
   refs.choiceSteps.hidden = false;
+  refs.iosChoice.querySelector('.ios-choice-card')?.classList.add('is-steps');
   if (refs.choiceBrowserNote) {
     refs.choiceBrowserNote.textContent = isIOSSafari
       ? '加入後請關閉這個分頁，從主畫面啟動，就會以全螢幕開啟。'
@@ -352,7 +355,11 @@ function handleStartRequest() {
     return;
   }
   if (isAndroid && !isStandalone) {
-    requestFullscreenForGame();
+    requestFullscreenForGame().then((entered) => {
+      if (!entered) {
+        toast('此瀏覽器未允許自動全螢幕；可點右上角全螢幕按鈕再試。', 4200, true);
+      }
+    });
   }
   startGame();
 }
@@ -1057,6 +1064,7 @@ function bindEvents() {
   refs.choiceStepsBack.addEventListener('click', () => {
     refs.choiceSteps.hidden = true;
     refs.choiceOptions.hidden = false;
+    refs.iosChoice.querySelector('.ios-choice-card')?.classList.remove('is-steps');
     refs.choiceInstall.focus({ preventScroll: true });
     audio.click();
   });
