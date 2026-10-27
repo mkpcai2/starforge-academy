@@ -17,7 +17,8 @@
 ## 本機啟動
 
 ```powershell
-cd threejs-academy
+git clone https://github.com/mkpcai2/starforge-academy.git
+cd starforge-academy
 node serve.mjs
 ```
 
@@ -61,7 +62,7 @@ python -m http.server 8137
 ## 專案結構
 
 ```text
-threejs-academy/
+starforge-academy/
 ├─ index.html
 ├─ style.css
 ├─ serve.mjs
